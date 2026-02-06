@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "headers/globs.h"
 #include "headers/sender.h"
 #include "headers/config.h"
 #include "headers/main.h"
@@ -19,15 +20,20 @@ int main(int argc, char *argv[]){
     printf("Setting globs...\n");
     set_globs();
 
-    bool sock_alive = 0;
-    int sleep_current = 0;
-    while(sock_alive == 0){
-        sock_alive = sock_init();
-        if (!sock_alive){
-            if (sleep_current < MAX_SOCK_SLEEP_SEC){
-                sleep_current += 3;
+    if (IS_SERVER){
+        printf("Starting in server mode...\n");
+    } else {
+        printf("Starting in client mode...\n");
+        bool sock_alive = 0;
+        int sleep_current = 0;
+        while(sock_alive == 0){
+            sock_alive = sock_init();
+            if (!sock_alive){
+                if (sleep_current < MAX_SOCK_SLEEP_SEC){
+                    sleep_current += 3;
+                }
+                sleep(sleep_current);
             }
-            sleep(sleep_current);
         }
     }
 }

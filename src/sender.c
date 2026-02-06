@@ -8,9 +8,27 @@
 #include "headers/globs.h"
 
 int SOCKET_FD = 0;
+bool SOCKET_ALIVE = 0;
+struct sockaddr_in SERVER_ADDR;
+bool sender_initialized = 0;
+
+void sender_init(){
+    memset(&SERVER_ADDR, 0, sizeof(SERVER_ADDR));
+    SERVER_ADDR.sin_family = AF_INET;
+    SERVER_ADDR.sin_port = htons(LCT_SERVER_PORT);
+
+    if (inet_pton(AF_INET, LCT_SERVER_ADDR, &SERVER_ADDR.sin_addr) <= 0) {
+        perror("inet_pton");
+        close(SOCKET_FD);
+        sender_initialized = 0;
+    }
+    sender_initialized = 1;
+}
 
 bool sock_init() {
-    struct sockaddr_in server_addr;
+    if (!sender_initialized){
+        sender_init();
+    }
 
     SOCKET_FD = socket(AF_INET, SOCK_STREAM, 0);
     if (SOCKET_FD < 0) {
@@ -18,22 +36,13 @@ bool sock_init() {
         exit(EXIT_FAILURE);
     }
 
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(12345);
-
-    if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
-        perror("inet_pton");
-        close(SOCKET_FD);
-        return 0;
-    }
-
-    if (connect(SOCKET_FD, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (connect(SOCKET_FD, (struct sockaddr *)&SERVER_ADDR, sizeof(struct sockaddr_in)) < 0) {
         perror("connect");
         close(SOCKET_FD);
         return 0;
     }
 
     printf("Socket initialized.\n");
+    SOCKET_ALIVE = 1;
     return 1;
 }
