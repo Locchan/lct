@@ -10,9 +10,9 @@
 struct config_entry* GLOBAL_CONFIG = NULL;
 bool IS_SERVER = false;
 char* LCT_LISTEN_ADDR = NULL;
-int LCT_LISTEN_PORT = 0;
+uint16_t LCT_LISTEN_PORT = 0;
 char* LCT_SERVER_ADDR = NULL;
-int LCT_SERVER_PORT = 0;
+uint16_t LCT_SERVER_PORT = 0;
 
 void parse_config(char *config_path){
     printf("Parsing config...\n");
@@ -94,14 +94,8 @@ void set_globs(){
     if (IS_SERVER){
         LCT_LISTEN_ADDR = get_config_entry("LCT_LISTEN_ADDR", 1);
         LCT_LISTEN_PORT = atoi(get_config_entry("LCT_LISTEN_PORT", 1));
-        if (LCT_LISTEN_PORT <= 0 || LCT_LISTEN_PORT > 65535){
-            crash(EXIT_FAILURE, "Malformed LCT_LISTEN_PORT. Should be a valid port number.\n");
-        }
     } else {
         LCT_SERVER_ADDR = get_config_entry("LCT_SERVER_ADDR", 1);
         LCT_SERVER_PORT = atoi(get_config_entry("LCT_SERVER_PORT", 1));
-        if (LCT_SERVER_PORT <= 0 || LCT_SERVER_PORT > 65535){
-            crash(EXIT_FAILURE, "Malformed LCT_LISTEN_PORT. Should be a valid port number.\n");
-        }
     }
 }

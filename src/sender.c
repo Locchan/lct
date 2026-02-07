@@ -46,3 +46,16 @@ bool sock_init() {
     SOCKET_ALIVE = 1;
     return 1;
 }
+
+void send_data(byte* data, int size){
+    size_t data_written = write(SOCKET_FD, data, size);
+    if (data_written == -1){
+        perror("Could not send data: ");
+        SOCKET_ALIVE = 0;
+        return;
+    }
+    if (data_written != size){
+        fprintf(stderr, "Could not send all data. Only %ldb sent.\n", data_written);
+    }
+    printf("Sent %d bytes of data\n", size);
+}

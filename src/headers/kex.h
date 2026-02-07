@@ -1,5 +1,5 @@
 #pragma once
 
-#include <sys/types.h>
+#include <stdint.h>
 
-extern u_int8_t CURRENT_KEX_STEP;
+extern uint8_t CURRENT_KEX_STEP;
