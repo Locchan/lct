@@ -46,13 +46,19 @@ int main(int argc, char *argv[]){
             }
         }
         char session_id[8];
+        generate_session_id(session_id);
         byte* data = "Hello, LCT!";
-        struct lct_packet* packet = create_lct_packet(generate_session_id(session_id), data, 1, 12);
-        uint16_t* result_size = (uint16_t*) malloc(sizeof(uint16_t));
-        byte* packet_serialized = serialize_lct_packet(packet, result_size);
+        struct lct_packet* packet;
+        uint16_t* result_size;
+        byte* packet_serialized;
+        result_size = (uint16_t*) malloc(sizeof(uint16_t));
         while(1){
+            packet = create_lct_packet(session_id, data, 1, 12);
+            packet_serialized = serialize_lct_packet(packet, result_size);
             send_data(packet_serialized, *result_size);
-            sleep(1);
+            free(packet_serialized);
+            usleep(50000);
+            destroy_lct_packet(packet);
         }
     }
 }
