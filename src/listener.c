@@ -46,10 +46,10 @@ void lct_listen(){
             assert(data_buf_size + size_recieved < 3*MAX_LCT_PACKET_SIZE);
             memcpy(&data_buffer[data_buf_size], read_buffer, size_recieved);
             data_buf_size += size_recieved;
-            if (data_buf_size < LCT_PKT_HEADER_SIZE){
-                continue;
-            }
-            while(1){ // Iterate over the buffer and find all valid packets in it
+            do { // Iterate over the buffer and find all valid packets in it
+                if (data_buf_size < LCT_PKT_HEADER_SIZE){
+                    break;
+                }
                 lct_packet_start_byte = detect_lct_packet(data_buffer, data_buf_size);
 
                 if(lct_packet_start_byte != UINT16_MAX){ // a packet header is found
@@ -57,31 +57,32 @@ void lct_listen(){
                         pkt_extraction_success = extract_lct_packet(data_buffer, data_buf_size, lct_packet_start_byte, &lct_packet_serialized, &lct_packet_serialized_size);
                         if (pkt_extraction_success){
                             packet = deserialize_lct_packet(lct_packet_serialized, lct_packet_serialized_size);
+                            if (packet == NULL) { // got something that has the valid marker and valid size, but is invalid otherwise. In this case, just remove sizeof(LCT_PKT_MARKER) bytes from the start (the false packet header)
+                                data_buf_cutoff_start = lct_packet_start_byte + sizeof(LCT_PKT_MARKER);
+                                memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (data_buf_cutoff_start));
+                                data_buf_size -= lct_packet_start_byte + sizeof(LCT_PKT_MARKER);
+                                continue;
+                            }
                             free(lct_packet_serialized);
                             data_buf_cutoff_start = lct_packet_start_byte + lct_packet_serialized_size;
-                            memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (lct_packet_start_byte + lct_packet_serialized_size));
-                            data_buf_size = data_buf_size - (lct_packet_start_byte + lct_packet_serialized_size);
+                            memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (data_buf_cutoff_start));
+                            data_buf_size -= lct_packet_start_byte + lct_packet_serialized_size;
                             print_lct_packet(packet);
                             destroy_lct_packet(packet);
-                            continue;
                         } else {
                             if(data_buf_size - lct_packet_start_byte >= MAX_LCT_PACKET_SIZE){ // header is found but there's garbage data, not a valid packet (there is > MAX_LCT_PACKET_SIZE data in the buffer after the header but no valid packet was parsed)
                                 data_buf_cutoff_start = lct_packet_start_byte + MAX_LCT_PACKET_SIZE;
-                                memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (lct_packet_start_byte + MAX_LCT_PACKET_SIZE));
-                                data_buf_size = data_buf_size - (lct_packet_start_byte + MAX_LCT_PACKET_SIZE);
-                                break;
+                                memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (data_buf_cutoff_start));
+                                data_buf_size -= lct_packet_start_byte + MAX_LCT_PACKET_SIZE;
                             }
                         }
-                    } else {
-                        break;
                     }
-                } else { // a packet header is not found. Cut everything but the last 3 bytes (in case we had partial, cutoff marker)
-                    data_buf_cutoff_start = data_buf_size - 3;
-                    memmove(data_buffer, &data_buffer[data_buf_cutoff_start], 3);
+                } else { // a packet header is not found. Cut everything but the last sizeof(LCT_PKT_MARKER) bytes (in case we had partial/cutoff marker)
+                    data_buf_cutoff_start = data_buf_size - sizeof(LCT_PKT_MARKER);
+                    memmove(data_buffer, &data_buffer[data_buf_cutoff_start], sizeof(LCT_PKT_MARKER));
                     data_buf_size = 3;
-                    break;
                 }
-            }
+            } while(pkt_extraction_success); 
         }
     }
 

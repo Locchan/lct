@@ -9,7 +9,7 @@
 #include "headers/utils.h"
 
 uint8_t LCT_PKT_VALID_TYPES[2] = {1,2};
-byte LCT_PKT_MARKER[4] = {'L', 'C', 'T', '!'};
+byte LCT_PKT_MARKER[4] = {'L', 'C', 'T', '1'};
 uint8_t LCT_PKT_HEADER_SIZE = 
     sizeof(((struct lct_packet*)0)->marker) +
     sizeof(((struct lct_packet*)0)->type) + 
