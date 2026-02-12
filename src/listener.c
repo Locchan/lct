@@ -10,8 +10,13 @@
 #include <sys/types.h> 
 #include <unistd.h>
 
+#include "headers/listener.h"
 #include "headers/globs.h"
 #include "headers/lct_packet.h"
+#include "headers/lct_buffer.h"
+
+struct lct_packet_buffer* LISTEN_BUFFER;
+uint32_t INP_BUFFER_MAX_SIZE_ITEMS = 512;
 
 void lct_listen(){
     int server_fd, client_fd;
@@ -26,6 +31,7 @@ void lct_listen(){
     uint16_t data_buf_size = 0;
     uint16_t data_buf_cutoff_start = 0;
     uint16_t size_recieved = 0;
+    LISTEN_BUFFER = lct_buf_initialize(INP_BUFFER_MAX_SIZE_ITEMS);
 
     if (inet_pton(AF_INET, LCT_LISTEN_ADDR, &addr.sin_addr) <= 0) {
         perror("Invalid IP address");
@@ -67,8 +73,7 @@ void lct_listen(){
                             data_buf_cutoff_start = lct_packet_start_byte + lct_packet_serialized_size;
                             memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (data_buf_cutoff_start));
                             data_buf_size -= lct_packet_start_byte + lct_packet_serialized_size;
-                            print_lct_packet(packet);
-                            destroy_lct_packet(packet);
+                            lct_buf_add(packet, LISTEN_BUFFER);
                         } else {
                             if(data_buf_size - lct_packet_start_byte >= MAX_LCT_PACKET_SIZE){ // header is found but there's garbage data, not a valid packet (there is > MAX_LCT_PACKET_SIZE data in the buffer after the header but no valid packet was parsed)
                                 data_buf_cutoff_start = lct_packet_start_byte + MAX_LCT_PACKET_SIZE;
