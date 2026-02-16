@@ -26,3 +26,18 @@ char* generate_session_id(char* session_id){
     }
     return session_id;
 }
+
+void print_binary(byte* data, uint16_t data_size){
+    printf("Data:\n");
+    printf("\t");
+    uint16_t counter = 0;
+    for (uint16_t i=0; i<data_size; i++){
+        if (counter == 8){
+            printf("\n\t");
+            counter = 0;
+        }
+        printf("%02x ", data[i]);
+        counter+=1;
+    }
+    printf("\n");
+}

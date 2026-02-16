@@ -166,6 +166,7 @@ struct lct_packet* deserialize_lct_packet(byte* lctp, uint16_t data_size){
     return result;
 }
 
+// This will return UINT16_MAX if a packet has not been found or packet start position in the buffer otherwise
 uint16_t detect_lct_packet(byte* buffer, uint16_t buffer_len){
     for (uint16_t i=0; i<=buffer_len-sizeof(LCT_PKT_MARKER); i++){ // -sizeof(marker) is for the case when the marker is at the very end.
         if (memcmp(LCT_PKT_MARKER, &buffer[i], sizeof(LCT_PKT_MARKER)) == 0){
@@ -203,16 +204,7 @@ void print_lct_packet(struct lct_packet* lctp){
     printf("\tData length: %d\n", lctp->data_size);
     printf("\tGarbage length: %d\n", lctp->garbage_size);
     printf("\nData:\n");
-    uint8_t counter = 0;
-    printf("\t");
-    for (uint16_t i=0; i<lctp->data_size; i++){
-        if (counter == 8){
-            printf("\n\t");
-            counter = 0;
-        }
-        printf("%02x ", lctp->data[i]);
-        counter+=1;
-    }
+    print_binary(lctp->data, lctp->data_size);
     printf("\n");
 }
 

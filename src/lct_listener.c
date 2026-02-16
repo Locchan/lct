@@ -10,13 +10,10 @@
 #include <sys/types.h> 
 #include <unistd.h>
 
-#include "headers/listener.h"
+#include "headers/lct_listener.h"
 #include "headers/globs.h"
 #include "headers/lct_packet.h"
 #include "headers/lct_buffer.h"
-
-struct lct_packet_buffer* LISTEN_BUFFER;
-uint32_t INP_BUFFER_MAX_SIZE_ITEMS = 512;
 
 void lct_listen(){
     int server_fd, client_fd;
@@ -31,7 +28,6 @@ void lct_listen(){
     uint16_t data_buf_size = 0;
     uint16_t data_buf_cutoff_start = 0;
     uint16_t size_recieved = 0;
-    LISTEN_BUFFER = lct_buf_initialize(INP_BUFFER_MAX_SIZE_ITEMS);
 
     if (inet_pton(AF_INET, LCT_LISTEN_ADDR, &addr.sin_addr) <= 0) {
         perror("Invalid IP address");
@@ -58,7 +54,7 @@ void lct_listen(){
                 }
                 lct_packet_start_byte = detect_lct_packet(data_buffer, data_buf_size);
 
-                if(lct_packet_start_byte != UINT16_MAX){ // a packet header is found
+                if(lct_packet_start_byte != UINT16_MAX){ // a packet header is found (detect_lct_packet returns UINT16_MAX if it is not so)
                     if (data_buf_size - lct_packet_start_byte > LCT_PKT_HEADER_SIZE + 1){ // if the packet can be valid at all (or at least the header is full)
                         pkt_extraction_success = extract_lct_packet(data_buffer, data_buf_size, lct_packet_start_byte, &lct_packet_serialized, &lct_packet_serialized_size);
                         if (pkt_extraction_success){
@@ -73,7 +69,9 @@ void lct_listen(){
                             data_buf_cutoff_start = lct_packet_start_byte + lct_packet_serialized_size;
                             memmove(data_buffer, &data_buffer[data_buf_cutoff_start], data_buf_size - (data_buf_cutoff_start));
                             data_buf_size -= lct_packet_start_byte + lct_packet_serialized_size;
-                            lct_buf_add(packet, LISTEN_BUFFER);
+                            pthread_mutex_lock(&lct_buf_lock);
+                            lct_buf_add(packet, LCT_LISTEN_BUFFER);
+                            pthread_mutex_unlock(&lct_buf_lock);
                         } else {
                             if(data_buf_size - lct_packet_start_byte >= MAX_LCT_PACKET_SIZE){ // header is found but there's garbage data, not a valid packet (there is > MAX_LCT_PACKET_SIZE data in the buffer after the header but no valid packet was parsed)
                                 data_buf_cutoff_start = lct_packet_start_byte + MAX_LCT_PACKET_SIZE;
@@ -82,7 +80,7 @@ void lct_listen(){
                             }
                         }
                     }
-                } else { // a packet header is not found. Cut everything but the last sizeof(LCT_PKT_MARKER) bytes (in case we had partial/cutoff marker)
+                } else { // a packet header is not found. Cut everything but the last sizeof(LCT_PKT_MARKER) bytes (in case we had partial/cutoff marker at the very end of the buffer)
                     data_buf_cutoff_start = data_buf_size - sizeof(LCT_PKT_MARKER);
                     memmove(data_buffer, &data_buffer[data_buf_cutoff_start], sizeof(LCT_PKT_MARKER));
                     data_buf_size = 3;

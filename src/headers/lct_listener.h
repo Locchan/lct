@@ -5,4 +5,4 @@
 
 void lct_listen();
 
-extern struct lct_packet_buffer* LISTEN_BUFFER;
+extern struct lct_packet_buffer* LCT_LISTEN_BUFFER;

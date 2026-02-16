@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,9 @@ char* LCT_LISTEN_ADDR = NULL;
 uint16_t LCT_LISTEN_PORT = 0;
 char* LCT_SERVER_ADDR = NULL;
 uint16_t LCT_SERVER_PORT = 0;
+uint16_t UDP_LISTEN_PORT = 0;
+uint16_t UDP_SEND_PORT = 0;
+
 
 void parse_config(char *config_path){
     printf("Parsing config...\n");
@@ -94,8 +98,10 @@ void set_globs(){
     if (IS_SERVER){
         LCT_LISTEN_ADDR = get_config_entry("LCT_LISTEN_ADDR", 1);
         LCT_LISTEN_PORT = atoi(get_config_entry("LCT_LISTEN_PORT", 1));
+        UDP_SEND_PORT = atoi(get_config_entry("UDP_SEND_PORT", 1));
     } else {
         LCT_SERVER_ADDR = get_config_entry("LCT_SERVER_ADDR", 1);
         LCT_SERVER_PORT = atoi(get_config_entry("LCT_SERVER_PORT", 1));
+        UDP_LISTEN_PORT = atoi(get_config_entry("UDP_LISTEN_PORT", 1));
     }
 }
