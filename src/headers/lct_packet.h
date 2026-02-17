@@ -30,3 +30,4 @@ void print_lct_packet(struct lct_packet* lctp);
 bool extract_lct_packet(byte* buffer, uint16_t buffer_len, uint16_t lct_packet_position, byte** output_buffer, uint16_t* output_buffer_len);
 // Returns the place in the buffer where the packet starts (if packet is found, MAX_UINT16T otherwise)
 uint16_t detect_lct_packet(byte* buffer, uint16_t buffer_len);
+uint16_t smart_garbage_sizer(uint16_t max_garbage_size, uint16_t data_size);

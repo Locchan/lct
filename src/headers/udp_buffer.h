@@ -8,7 +8,7 @@
 
 struct udp_buffer {
     byte** data;
-    uint16_t data_size;
+    uint16_t* data_size;
     uint16_t size_items;
     uint16_t max_size_items;
     uint16_t head;

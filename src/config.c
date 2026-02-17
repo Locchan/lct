@@ -8,15 +8,16 @@
 #include "headers/globs.h"
 #include "headers/utils.h"
 
+/* If we're the initiator, LCT_PEER is where we connect to
+   Otherwise, it's who we are */
 struct config_entry* GLOBAL_CONFIG = NULL;
-bool IS_SERVER = false;
-char* LCT_LISTEN_ADDR = NULL;
-uint16_t LCT_LISTEN_PORT = 0;
-char* LCT_SERVER_ADDR = NULL;
-uint16_t LCT_SERVER_PORT = 0;
+bool IS_INITIATOR = false;
+char* LCT_PEER_ADDR = NULL;
+uint16_t LCT_PEER_PORT = 0;
+char* UDP_LISTEN_ADDR = NULL;
 uint16_t UDP_LISTEN_PORT = 0;
+char* UDP_SEND_ADDR = NULL;
 uint16_t UDP_SEND_PORT = 0;
-
 
 void parse_config(char *config_path){
     printf("Parsing config...\n");
@@ -94,14 +95,11 @@ char* get_config_entry(char* key, bool crash_if_not_found){
 }
 
 void set_globs(){
-    IS_SERVER = strcmp(get_config_entry("MODE", 1), "server") == 0;
-    if (IS_SERVER){
-        LCT_LISTEN_ADDR = get_config_entry("LCT_LISTEN_ADDR", 1);
-        LCT_LISTEN_PORT = atoi(get_config_entry("LCT_LISTEN_PORT", 1));
-        UDP_SEND_PORT = atoi(get_config_entry("UDP_SEND_PORT", 1));
-    } else {
-        LCT_SERVER_ADDR = get_config_entry("LCT_SERVER_ADDR", 1);
-        LCT_SERVER_PORT = atoi(get_config_entry("LCT_SERVER_PORT", 1));
-        UDP_LISTEN_PORT = atoi(get_config_entry("UDP_LISTEN_PORT", 1));
-    }
+    IS_INITIATOR = strcmp(get_config_entry("INITIATOR", 1), "true") == 0;
+    LCT_PEER_ADDR = get_config_entry("LCT_PEER_ADDR", 1);
+    LCT_PEER_PORT = atoi(get_config_entry("LCT_PEER_PORT", 1));
+    UDP_LISTEN_ADDR = get_config_entry("UDP_LISTEN_ADDR", 1);
+    UDP_LISTEN_PORT = atoi(get_config_entry("UDP_LISTEN_PORT", 1));
+    UDP_SEND_ADDR = get_config_entry("UDP_SEND_ADDR", 1);
+    UDP_SEND_PORT = atoi(get_config_entry("UDP_SEND_PORT", 1));
 }

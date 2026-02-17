@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 #include "headers/globs.h"
 #include "headers/utils.h"
@@ -40,4 +42,27 @@ void print_binary(byte* data, uint16_t data_size){
         counter+=1;
     }
     printf("\n");
+}
+
+int check_sock_alive(int sock_fd){
+    if (sock_fd == -1){
+        return 0;
+    }
+    char buf;
+    // Try to "look" at 1 byte of data
+    ssize_t result = recv(sock_fd, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
+
+    if (result == 0) {
+        // Peer closed connection gracefully (received FIN)
+        return 0; 
+    } else if (result < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // No data available, but connection is still technically open
+            return 1;
+        }
+        // A real error occurred (e.g., Connection Reset)
+        return 0;
+    }
+    // result > 0: Data is waiting, connection is definitely alive
+    return 1; 
 }

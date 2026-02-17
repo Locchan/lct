@@ -9,6 +9,7 @@
 struct udp_buffer* udp_buf_initialize(uint16_t max_size_items){
     struct udp_buffer* new_buf = (struct udp_buffer*) malloc(sizeof(struct udp_buffer));
     new_buf->data = malloc(sizeof(byte*) * max_size_items);
+    new_buf->data_size = malloc(sizeof(uint16_t) * max_size_items);
     new_buf->size_items = 0;
     new_buf->head = 0;
     new_buf->tail = 0;
@@ -26,7 +27,7 @@ void udp_buf_add(byte* data, uint16_t data_size, struct udp_buffer* buffer){
         buffer->size_items += 1;
     }
     buffer->data[buffer->tail] = data;
-    buffer->data_size = data_size;
+    buffer->data_size[buffer->tail] = data_size;
     buffer->tail = (buffer->tail + 1) % buffer->max_size_items;
     pthread_cond_signal(&udp_comms_signal);
 }
@@ -36,7 +37,7 @@ struct udp_pop_result udp_buf_pop(struct udp_buffer* buffer){
     struct udp_pop_result result;
     if(buffer->size_items > 0){
         result.data = buffer->data[buffer->head];
-        result.size = buffer->data_size;
+        result.size = buffer->data_size[buffer->head];
         buffer->head = (buffer->head + 1) % buffer->max_size_items;
         buffer->size_items -= 1;
     } else {

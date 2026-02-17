@@ -39,7 +39,7 @@ struct lct_packet* create_lct_packet(char* session_id, byte* data, uint8_t type,
     uint16_t garbage_start = LCT_PKT_HEADER_SIZE + result->data_size;
     uint16_t max_garbage_size = MAX_LCT_PACKET_SIZE - garbage_start;
     if (max_garbage_size > 0) {
-        uint16_t actual_garbage_size = rand() % max_garbage_size;
+        uint16_t actual_garbage_size = smart_garbage_sizer(max_garbage_size, result->data_size);
         byte* garbage = malloc(actual_garbage_size);
         generate_random(garbage, actual_garbage_size);
         result->garbage_size = actual_garbage_size;
@@ -50,6 +50,34 @@ struct lct_packet* create_lct_packet(char* session_id, byte* data, uint8_t type,
     }
 
     return result;
+}
+
+// This makes garbage, but makes reduced additional traffic.
+uint16_t smart_garbage_sizer(uint16_t max_garbage_size, uint16_t data_size){
+    uint16_t actual_size = 0;
+    uint16_t temp_size = 0;
+    uint8_t rand_exit = 0;
+
+    if (max_garbage_size > data_size * 1.5){ // garbage cannot be more than 1,5 times the data
+        max_garbage_size = data_size * 1.5;
+    }
+
+    if (max_garbage_size < 64){ // don't bother when the packet is almost the max size
+        return rand() % max_garbage_size;
+    }
+
+    while(1){ // there's 9/10 chance we add 3% of maximum garbage size every iteration, otherwise we just exit and return the accumulated garbage size
+        rand_exit = rand() % 100;
+        if (rand_exit <= 90){
+            temp_size = rand() % (max_garbage_size / 33);
+            if ((actual_size + temp_size) <= max_garbage_size){
+                actual_size += temp_size;
+            }
+        } else {
+            break;
+        }
+    }
+    return actual_size;
 }
 
 byte* serialize_lct_packet(struct lct_packet* lctp, uint16_t* result_size){
@@ -203,7 +231,6 @@ void print_lct_packet(struct lct_packet* lctp){
     printf("\tSession ID: %.8s\n", lctp->session_id);
     printf("\tData length: %d\n", lctp->data_size);
     printf("\tGarbage length: %d\n", lctp->garbage_size);
-    printf("\nData:\n");
     print_binary(lctp->data, lctp->data_size);
     printf("\n");
 }
